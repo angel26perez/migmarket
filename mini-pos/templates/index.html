@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MigMarket - Sistema De Facturacion</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+    <!-- LOGIN CON EFECTO BLUR / MATTE -->
+    <div id="login-backdrop" class="modal-backdrop" style="display: flex;">
+        <div class="login-card">
+            <h2>🔐 Iniciar Sesión</h2>
+            <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 1.5rem;">Selecciona tu rol de acceso</p>
+            
+            <div id="role-selection-box" style="display: flex; flex-direction: column; gap: 1rem;">
+                <button class="btn-checkout" onclick="seleccionarRol('Trabajador', 'cajero')">🧑‍💻 Cuenta Trabajador</button>
+                <button class="btn-checkout" style="background: #8e44ad;" onclick="mostrarInputAdmin()">👑 Cuenta Administrador</button>
+            </div>
+
+            <div id="admin-password-box" style="display: none; text-align: left; margin-top: 1rem;">
+                <label style="font-size: 0.85rem; font-weight: bold; color: #334155;">Contraseña de Administrador:</label>
+                <input type="password" id="admin-pass-input" class="login-input" placeholder="Introduce la contraseña...">
+                <p id="error-msg" style="color: #e74c3c; font-size: 0.8rem; margin-bottom: 0.8rem; display: none;"></p>
+                
+                <div style="display: flex; gap: 0.5rem;">
+                    <button class="btn-add" onclick="verificarPasswordAdmin()">Ingresar</button>
+                    <button class="btn-cancel-all" onclick="volverRoles()">Atrás</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <header>
+        <h2>MigMarket 🛒 Sistema De Facturacion</h2>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <button class="btn-nav" id="btn-nav-dash" style="background: #27ae60;" onclick="mostrarVista('dashboard')">📊 Dashboard</button>
+            <button class="btn-nav" id="btn-nav-pos" style="background: #2980b9;" onclick="mostrarVista('pos')">🛒 Caja (POS)</button>
+            <button class="btn-nav" style="background: #d35400;" onclick="abrirCorteCaja()">💼 Corte de Caja</button>
+            <button class="btn-nav" id="btn-admin-nuevo" style="display: none; background: #8e44ad;" onclick="abrirModalNuevoProducto()">➕ Nuevo Producto</button>
+            <span id="user-info" style="font-weight: bold;">Rol: -</span>
+            <button class="btn-cancel-all" onclick="cerrarSesion()">Cerrar Sesión</button>
+        </div>
+    </header>
+
+    <!-- VISTA 1: DASHBOARD PRINCIPAL -->
+    <div id="view-dashboard" class="main-view" style="padding: 2rem; overflow-y: auto; width: 100%; margin-top: 60px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <div>
+                <h1>Panel de Control General</h1>
+                <p style="color: #64748b;">Resumen analítico y registro detallado de las operaciones recientes.</p>
+            </div>
+            <button class="btn-checkout" style="width: auto; padding: 0.8rem 1.5rem; background: #27ae60;" onclick="mostrarVista('pos')">🛒 Iniciar Nueva Venta</button>
+        </div>
+
+        <div style="display: flex; gap: 1.5rem; margin-bottom: 2rem; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 220px; background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                <h4 style="color: #64748b; font-size: 0.9rem;">Ventas Totales Históricas</h4>
+                <p id="dash-total" style="font-size: 1.6rem; font-weight: bold; color: #2c3e50; margin-top: 0.5rem;">$0.0</p>
+            </div>
+            <div style="flex: 1; min-width: 220px; background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                <h4 style="color: #64748b; font-size: 0.9rem;">Transacciones Realizadas</h4>
+                <p id="dash-transacciones" style="font-size: 1.6rem; font-weight: bold; color: #2c3e50; margin-top: 0.5rem;">0</p>
+            </div>
+            <div style="flex: 1; min-width: 220px; background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                <h4 style="color: #64748b; font-size: 0.9rem;">Producto Estelar</h4>
+                <p id="dash-top" style="font-size: 1.3rem; font-weight: bold; color: #8e44ad; margin-top: 0.5rem;">-</p>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 350px; background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                <h3>📈 Comportamiento de Ventas</h3>
+                <div style="position: relative; height: 260px; margin-top: 1rem;">
+                    <canvas id="graficoVentas"></canvas>
+                </div>
+            </div>
+
+            <div style="flex: 1.5; min-width: 450px; background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                <h3>📜 Detalle de las Últimas Ventas</h3>
+                <div id="tabla-ultimas-ventas" style="max-height: 280px; overflow-y: auto; margin-top: 1rem;">
+                    <p style="color: #888;">Cargando registros...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- VISTA 2: PROCESO DE VENTA / POS -->
+    <div id="view-pos" class="main-view" style="display: none; width: 100%; margin-top: 60px; height: calc(100vh - 60px);">
+        <div class="main-container" style="margin-top: 0; height: 100%;">
+            <section class="catalog-section">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <button class="btn-nav" style="background: #e74c3c;" onclick="cancelarYVolverAlDashboard()">⬅️ Cancelar Venta y Volver</button>
+                    <!-- FILTRO RÁPIDO DE STOCK BAJO (SOLO ADMIN) -->
+                    <button class="btn-nav" id="btn-filtro-stock" style="display: none; background: #c0392b;" onclick="alternarFiltroStockBajo()">⚠️ Ver Stock Bajo (<span id="count-stock-bajo">0</span>)</button>
+                    <span style="font-weight: bold; color: #2c3e50;">Caja de Cobro Activa</span>
+                </div>
+
+                <div class="search-container">
+                    <input type="text" id="search-input" placeholder="🔍 Buscar por nombre o ID de producto..." oninput="filtrarProductos()">
+                </div>
+
+                <div class="section-block" id="menu-categorias-container">
+                    <div class="category-header-title">
+                        <h2>Selecciona una Categoría</h2>
+                        <p>Nuestras 10 categorías disponibles</p>
+                    </div>
+                    
+                    <div class="categories-grid-visual">
+                        <div class="cat-card" onclick="filtrarPorCategoria('Todos')"><div class="cat-icon bg-blue">🏪</div><span>Todos</span></div>
+                        <div class="cat-card" onclick="filtrarPorCategoria('Bebidas')"><div class="cat-icon bg-pink">🥤</div><span>Bebidas</span></div>
+                        <div class="cat-card" onclick="filtrarPorCategoria('Comidas')"><div class="cat-icon bg-orange">🥪</div><span>Comidas</span></div>
+                        <div class="cat-card" onclick="filtrarPorCategoria('Arte y Diseño')"><div class="cat-icon bg-purple">🖼️</div><span>Arte</span></div>
+                        <div class="cat-card" onclick="filtrarPorCategoria('Moda y Ropa')"><div class="cat-icon bg-blue">👚</div><span>Moda</span></div>
+                        <div class="cat-card" onclick="filtrarPorCategoria('Deportes')"><div class="cat-icon bg-green">⚽</div><span>Deportes</span></div>
+                        <div class="cat-card" onclick="filtrarPorCategoria('Cuidado Personal')"><div class="cat-icon bg-orange">🦷</div><span>Personal</span></div>
+                        <div class="cat-card" onclick="filtrarPorCategoria('Snacks y Frutas')"><div class="cat-icon bg-pink">🍪</div><span>Snacks</span></div>
+                        <div class="cat-card" onclick="filtrarPorCategoria('Panadería')"><div class="cat-icon bg-orange">🍞</div><span>Panadería</span></div>
+                        <div class="cat-card" onclick="filtrarPorCategoria('Aseo Hogar')"><div class="cat-icon bg-green">🧹</div><span>Aseo</span></div>
+                        <div class="cat-card" onclick="filtrarPorCategoria('Lácteos')"><div class="cat-icon bg-blue">🥛</div><span>Lácteos</span></div>
+                    </div>
+                </div>
+
+                <div class="section-block" id="seccion-populares">
+                    <h3 id="titulo-populares">⭐ Productos Destacados</h3>
+                    <div id="grid-populares" class="catalog-grid"></div>
+                </div>
+
+                <div class="section-block">
+                    <h3 id="titulo-categoria-activa">📂 Productos de la Categoría: Todos</h3>
+                    <div id="grid-categorias" class="catalog-grid" style="margin-top: 1rem;"></div>
+                </div>
+            </section>
+
+            <aside class="cart-section">
+                <div class="cart-header">
+                    <h2>Carrito de Venta</h2>
+                    <button class="btn-cancel-all" onclick="cancelarPedidoTotal()">🗑️ Vaciar</button>
+                </div>
+                
+                <div id="cart-items" class="cart-items">
+                    <p style="color: #999; text-align: center; margin-top: 2rem;">El carrito está vacío</p>
+                </div>
+                
+                <div class="cart-summary">
+                    <div class="total-row">
+                        <span>Total:</span>
+                        <span id="cart-total">$0.0</span>
+                    </div>
+                    <button class="btn-checkout" onclick="procesarPago()">Cobrar e Imprimir Factura</button>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <!-- MODAL DE CORTE DE CAJA -->
+    <div id="modal-corte" class="modal">
+        <div class="modal-content" style="max-width: 420px; text-align: center;">
+            <h2>💼 Arqueo y Corte de Caja</h2>
+            <p style="color: #666; font-size: 0.85rem; margin-bottom: 1rem;">Resumen de ventas de tu turno actual</p>
+            <div style="background: #f8fafc; padding: 1rem; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 1rem; text-align: left;">
+                <p><strong>Cajero / Rol:</strong> <span id="corte-rol"></span></p>
+                <p><strong>Transacciones en turno:</strong> <span id="corte-cantidad">0</span></p>
+                <p style="margin-top: 0.5rem; font-size: 1.2rem;"><strong>Total Efectivo en Caja:</strong> <span id="corte-total" style="color: #27ae60;">$0.0</span></p>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-add" onclick="cerrarCorteCaja()">Aceptar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL FACTURA -->
+    <div id="modal-factura" class="modal">
+        <div class="modal-content invoice-box" id="factura-print">
+            <h2 style="text-align: center;">TICKET DE VENTA</h2>
+            <p style="text-align: center; font-size: 0.80rem; color: #555;">MiniPOS Supermercado Local</p>
+            <hr style="margin: 0.5rem 0;">
+            <p><strong>Factura N°:</strong> <span id="factura-id"></span></p>
+            <p><strong>Fecha:</strong> <span id="factura-fecha"></span></p>
+            <p><strong>Cajero / Rol:</strong> <span id="factura-rol"></span></p>
+            <hr style="margin: 0.5rem 0;">
+            <div id="factura-detalles"></div>
+            <hr style="margin: 0.5rem 0;">
+            <h3 style="text-align: right;">Total: <span id="factura-total"></span></h3>
+            <div class="modal-actions">
+                <button class="btn-add" onclick="window.print()">🖨️ Imprimir Factura</button>
+                <button class="btn-cancel-all" onclick="finalizarYVolver()">Cerrar y Volver al Dashboard</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL NUEVO PRODUCTO -->
+    <div id="modal-nuevo" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <h2>➕ Agregar Nuevo Producto</h2>
+            <label style="font-size: 0.85rem; font-weight: bold;">Nombre:</label>
+            <input type="text" id="nuevo-nombre" style="width: 100%; padding: 0.4rem; margin-bottom: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+            <label style="font-size: 0.85rem; font-weight: bold;">Precio ($):</label>
+            <input type="number" id="nuevo-precio" style="width: 100%; padding: 0.4rem; margin-bottom: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+            <label style="font-size: 0.85rem; font-weight: bold;">Stock Inicial:</label>
+            <input type="number" id="nuevo-stock" style="width: 100%; padding: 0.4rem; margin-bottom: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+            <label style="font-size: 0.85rem; font-weight: bold;">Categoría:</label>
+            <select id="nuevo-categoria" style="width: 100%; padding: 0.4rem; margin-bottom: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+                <option value="Bebidas">Bebidas</option>
+                <option value="Comidas">Comidas</option>
+                <option value="Arte y Diseño">Arte y Diseño</option>
+                <option value="Moda y Ropa">Moda y Ropa</option>
+                <option value="Deportes">Deportes</option>
+                <option value="Cuidado Personal">Cuidado Personal</option>
+                <option value="Snacks y Frutas">Snacks y Frutas</option>
+                <option value="Panadería">Panadería</option>
+                <option value="Aseo Hogar">Aseo Hogar</option>
+                <option value="Lácteos">Lácteos</option>
+            </select>
+            <label style="font-size: 0.85rem; font-weight: bold;">Emoji (Imagen):</label>
+            <input type="text" id="nuevo-imagen" value="📦" style="width: 100%; padding: 0.4rem; margin-bottom: 1rem; border: 1px solid #ddd; border-radius: 4px;">
+            <div class="modal-actions">
+                <button class="btn-add" onclick="crearNuevoProducto()">Crear Producto</button>
+                <button class="btn-cancel-all" onclick="cerrarModalNuevoProducto()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL EDITAR PRODUCTO -->
+    <div id="modal-editar" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <h2>✏️ Editar Producto</h2>
+            <p id="edit-prod-nombre" style="font-weight: bold; margin: 0.5rem 0; color: #2c3e50;"></p>
+            <input type="hidden" id="edit-prod-id">
+            <label style="font-size: 0.85rem; font-weight: bold;">Nuevo Precio ($):</label>
+            <input type="number" id="edit-prod-precio" style="width: 100%; padding: 0.5rem; margin: 0.3rem 0 1rem 0; border: 1px solid #ddd; border-radius: 4px;">
+            <label style="font-size: 0.85rem; font-weight: bold;">Nuevo Stock:</label>
+            <input type="number" id="edit-prod-stock" style="width: 100%; padding: 0.5rem; margin: 0.3rem 0 1rem 0; border: 1px solid #ddd; border-radius: 4px;">
+            <div class="modal-actions">
+                <button class="btn-add" onclick="guardarEdicionProducto()">Guardar Cambios</button>
+                <button class="btn-cancel-all" onclick="cerrarModalEditar()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,120 @@
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+body { background-color: #f4f7f6; color: #333; display: flex; height: 100vh; overflow: hidden; }
+
+header { background: #2c3e50; color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; width: 100%; position: fixed; top: 0; height: 60px; z-index: 10; }
+
+.btn-nav { background: #34495e; color: white; border: 1px solid #5d6d7e; padding: 0.4rem 0.8rem; border-radius: 4px; cursor: pointer; font-weight: 600; }
+.btn-nav:hover { background: #415b76; }
+
+.main-container { display: flex; width: 100%; margin-top: 60px; height: calc(100vh - 60px); }
+
+.catalog-section { flex: 3; padding: 2rem; overflow-y: auto; }
+.search-container { margin-bottom: 1.5rem; width: 100%; }
+.search-container input { width: 100%; padding: 0.8rem 1rem; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; outline: none; background: white; }
+
+.section-block { margin-bottom: 2.5rem; }
+.section-block h3 { margin-bottom: 1rem; color: #2c3e50; border-bottom: 2px solid #ddd; padding-bottom: 0.3rem; }
+
+.categories-grid-visual { display: flex; gap: 1rem; overflow-x: auto; padding-bottom: 0.5rem; margin-bottom: 1rem; }
+.cat-card { display: flex; flex-direction: column; align-items: center; cursor: pointer; min-width: 90px; transition: transform 0.2s; }
+.cat-card:hover { transform: translateY(-5px); }
+.cat-icon { width: 70px; height: 70px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 2rem; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 0.4rem; }
+
+.bg-blue { background-color: #dbeafe; } .bg-pink { background-color: #fce7f3; } .bg-orange { background-color: #ffedd5; } .bg-green { background-color: #dcfce7; } .bg-purple { background-color: #f3e8ff; }
+.cat-card span { font-size: 0.8rem; font-weight: 600; color: #334155; text-align: center; }
+
+.catalog-grid { display: flex; flex-wrap: wrap; gap: 1rem; }
+.product-card { background: white; border-radius: 8px; padding: 1.2rem; width: 180px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; flex-direction: column; align-items: center; justify-content: space-between; position: relative; transition: transform 0.2s; }
+.product-card:hover { transform: translateY(-3px); }
+.product-badge { position: absolute; top: 8px; right: 8px; background: #e74c3c; color: white; font-size: 0.65rem; padding: 0.2rem 0.4rem; border-radius: 4px; font-weight: bold; }
+.product-id { font-size: 0.7rem; background: #eef2f3; color: #555; padding: 0.1rem 0.4rem; border-radius: 4px; align-self: flex-start; margin-bottom: 0.3rem; font-weight: bold; }
+.product-icon { font-size: 2.5rem; margin: 0.3rem 0; }
+.product-card h3 { font-size: 1rem; margin-bottom: 0.2rem; text-align: center; }
+.product-card p { color: #7f8c8d; margin-bottom: 0.8rem; font-size: 0.85rem; }
+
+.btn-add { background: #27ae60; color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 4px; cursor: pointer; width: 100%; font-weight: bold; font-size: 0.9rem; }
+.btn-add:hover { background: #219653; }
+
+/* PANEL DE CARRITO CON NUEVOS BOTONES */
+.cart-section { flex: 1.2; background: white; border-left: 1px solid #ddd; padding: 1.5rem; display: flex; flex-direction: column; justify-content: space-between; }
+.cart-header { display: flex; justify-content: space-between; align-items: center; }
+.btn-cancel-all { background: #e74c3c; color: white; border: none; padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: bold; }
+.btn-cancel-all:hover { background: #c0392b; }
+
+.cart-items { flex-grow: 1; overflow-y: auto; margin-top: 1rem; margin-bottom: 1rem; }
+.cart-item { display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0; border-bottom: 1px solid #eee; font-size: 0.9rem; }
+.qty-controls { display: flex; align-items: center; gap: 0.4rem; margin-top: 0.2rem; }
+.btn-qty { background: #e2e8f0; border: none; width: 22px; height: 22px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+.btn-qty:hover { background: #cbd5e1; }
+
+.cart-summary { border-top: 2px solid #eee; padding-top: 1rem; }
+.total-row { display: flex; justify-content: space-between; font-size: 1.2rem; font-weight: bold; margin-bottom: 1rem; }
+.btn-checkout { background: #2980b9; color: white; border: none; padding: 0.8rem; border-radius: 4px; cursor: pointer; width: 100%; font-size: 1rem; font-weight: bold; }
+.btn-checkout:hover { background: #2471a3; }
+
+/* MODALES Y FACTURACIÓN */
+.modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; justify-content: center; align-items: center; }
+.modal-content { background: white; padding: 2rem; border-radius: 8px; width: 90%; max-width: 450px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+.modal-actions { display: flex; gap: 0.5rem; margin-top: 1.5rem; }
+
+@media print {
+    body * { visibility: hidden; }
+    #modal-factura, #modal-factura * { visibility: visible; }
+    #modal-factura { position: absolute; left: 0; top: 0; width: 100%; background: white; }
+    .modal-actions { display: none; }
+}
+/* EFECTO BLUR / MATTE PARA EL LOGIN */
+.modal-backdrop {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(8px); /* Efecto difuminado moderno */
+    z-index: 100;
+    justify-content: center;
+    align-items: center;
+}
+
+.login-card {
+    background: white;
+    padding: 2.5rem;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    text-align: center;
+}
+
+.login-input {
+    width: 100%;
+    padding: 0.7rem 1rem;
+    margin: 0.8rem 0 1.2rem 0;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 1rem;
+    outline: none;
+}
+.login-input:focus {
+    border-color: #2980b9;
+    box-shadow: 0 0 0 3px rgba(41, 128, 185, 0.15);
+}
+
+/* ETIQUETA PARPADEANTE DE STOCK BAJO */
+@keyframes parpadeo {
+    0% { opacity: 1; }
+    50% { opacity: 0.4; }
+    100% { opacity: 1; }
+}
+
+.badge-stock-bajo {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    background: #e74c3c;
+    color: white;
+    font-size: 0.65rem;
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    font-weight: bold;
+    animation: parpadeo 1.2s infinite;
+}
